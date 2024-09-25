@@ -11,8 +11,8 @@ Avant de commencer, assurez-vous d'avoir les éléments suivants installés sur 
 - [Composer](https://getcomposer.org/) (pour gérer les dépendances PHP)
 - [PHP](https://www.php.net/) (version 8.3 ou supérieure)
 - [MySQL](https://www.mysql.com/) (ou toute autre base de données prise en charge par Laravel)
-
----
+- décommenter quelques extension sur le fichier de cinfiguration Php.ini:
+  openssl,mysqli,fileinfo
 
 ## Cloner le projet
 
