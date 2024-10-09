@@ -15,4 +15,9 @@ class Student extends Model
         "phone",
     ];
     use HasFactory;
+    
+    public function courses()
+    {
+        return $this->belongsToMany(Course::class, 'course_student');
+    }
 }

@@ -3,11 +3,12 @@
 namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Student;
-
+use App\Models\Course;
 
 class StudentController extends Controller
 {
     protected $student;
+    protected $course;
 
     public function __construct(){
      $this->student= new Student();
@@ -34,6 +35,19 @@ class StudentController extends Controller
     public function destroy(string $id ){
         $student =$this->student->find($id);
         return $student->delete();
+    }
+    
+    public function addCourseToStudent($studentId, $courseId)
+    {
+        $student = Student::find($studentId);
+        $course = Course::find($courseId);
+
+        if ($student && $course) {
+            $student->courses()->attach($course);
+            return response()->json(['message' => 'Cours ajouté avec succès à l\'étudiant.']);
+        } else {
+            return response()->json(['message' => 'Étudiant ou cours non trouvé.'], 404);
+        }
     }
 }
 

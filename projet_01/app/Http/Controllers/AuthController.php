@@ -2,48 +2,85 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use Validator;
+use Illuminate\Support\Facades\Auth;
+use App\Http\Controllers\Controller;
+use App\Http\Requests\UserRegisterRequest;
 use App\Models\User;
 
-class AuthController extends BaseController
+class AuthController extends Controller
 {
-    public function register(Request $request){
-             $validator = Validator::make($request->all(),
-                [
-                    'name'=>'required',
-                    'email'=>'required|email|unique:users,email', // Vérifie l'unicité de l'email,
-                    'password'=>'required|min:6', // Ajoute une règle pour la longueur du mot de passe
-                    'c_password'=>'required|same:password',
-                ]
-             );
-             if($validator ->fails()){
-                 return $this->sendError('validation error', $validator->errors()); 
-             }
-             
-             $input=$request->all();
-             $input['password']=bcrypt($input['password']);
-             $user= User::create($input);
+    public function register(UserRegisterRequest $request){
+      $validatedData= $request->validated();
 
-             $success['user']=$user;
+      $user= User::create([
+        'name'=>$validatedData['name'],
+        'email'=>$validatedData['email'],
+        'password'=>bcrypt($validatedData['password']),
+      ]);
+      $token=auth('api')->login($user);
+      return $this->respondWithToken($token);
+    }
+    /**
+     * Get a JWT via given credentials.
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function login()
+    {
+        $credentials = request(['email', 'password']);
 
-             return $this->sendResponse($success,'User register successfully.');
+        if (! $token = auth('api')->attempt($credentials)) {
+            return response()->json(['error' => 'Unauthorized'], 401);
+        }
+
+        return $this->respondWithToken($token);
     }
 
-    public function login(){
-
+    /**
+     * Get the authenticated User.
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function profile()
+    {
+        return response()->json(auth('api')->user());
     }
 
-    public function logout(){
+    /**
+     * Log the user out (Invalidate the token).
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function logout()
+    {
+        auth('api')->logout();
 
+        return response()->json(['message' => 'Successfully logged out']);
     }
 
-    public function refresh(){
-
+    /**
+     * Refresh a token.
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function refresh()
+    {
+        return $this->respondWithToken(auth('api')->refresh());
     }
 
-    public function profile(){
-
+    /**
+     * Get the token array structure.
+     *
+     * @param  string $token
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
+    protected function respondWithToken($token)
+    {
+        return response()->json([
+            'access_token' => $token,
+            'token_type' => 'bearer',
+            'expires_in' => auth('api')->factory()->getTTL() * 60
+        ]);
     }
-
 }
